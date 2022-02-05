@@ -9,6 +9,20 @@ AFountain::AFountain()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BODY"));
+	Water = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WATER"));
+	Light = CreateDefaultSubobject<UPointLightComponent>(TEXT("LIGHT"));
+	Splash = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SPLASH"));
+
+	RootComponent = Body;
+	Water->SetupAttachment(Body);
+	Light->SetupAttachment(Body);
+	Splash->SetupAttachment(Body);
+
+	Water->SetRelativeLocation(FVector(0.0f, 0.0f, 135.f));
+	Light->SetRelativeLocation(FVector(0.0f, 0.0f, 195.f));
+	Splash->SetRelativeLocation(FVector(0.0f, 0.0f, 195.f));
+
 }
 
 // Called when the game starts or when spawned
