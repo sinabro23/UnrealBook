@@ -1,5 +1,5 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "ABCharacter.h"
 #include "ABAnimInstance.h"
@@ -7,7 +7,7 @@
 // Sets default values
 AABCharacter::AABCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
@@ -16,12 +16,12 @@ AABCharacter::AABCharacter()
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
 
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.f), FRotator(0.0f, -90.f, 0.0f));
-
-	SpringArm->TargetArmLength = 400.f;
-	SpringArm->SetRelativeRotation(FRotator(-15.f, 0.0f, 0.0f));
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
+	SpringArm->TargetArmLength = 400.0f;
+	SpringArm->SetRelativeRotation(FRotator(-15.0f, 0.0f, 0.0f));
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_CARDBOARD(TEXT("SkeletalMesh'/Game/InfinityBladeWarriors/Character/CompleteCharacters/SK_CharM_Cardboard.SK_CharM_Cardboard'"));
+
 	if (SK_CARDBOARD.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(SK_CARDBOARD.Object);
@@ -30,27 +30,28 @@ AABCharacter::AABCharacter()
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 
 	static ConstructorHelpers::FClassFinder<UAnimInstance> WARRIOR_ANIM(TEXT("AnimBlueprint'/Game/Book/Animation/WarriorAnimBlueprint.WarriorAnimBlueprint_C'"));
+
 	if (WARRIOR_ANIM.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(WARRIOR_ANIM.Class);
 	}
-	
-	CurrentControlMode = EControlMode::DIABLO;
 
-	SetControlMode(CurrentControlMode);
+	SetControlMode(EControlMode::DIABLO);
 
-	ArmLengthTo = 3.f;
-	ArmRotationSpeed = 10.f;
-	GetCharacterMovement()->JumpZVelocity = 800.f;
+	ArmLengthSpeed = 3.0f;
+	ArmRotationSpeed = 10.0f;
+	GetCharacterMovement()->JumpZVelocity = 800.0f;
 
 	IsAttacking = false;
+	MaxCombo = 4;
+	AttackEndComboState();
 }
 
 // Called when the game starts or when spawned
 void AABCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 void AABCharacter::SetControlMode(EControlMode NewControlMode)
@@ -89,7 +90,6 @@ void AABCharacter::SetControlMode(EControlMode NewControlMode)
 		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 		break;
 	}
-
 }
 
 // Called every frame
@@ -101,32 +101,21 @@ void AABCharacter::Tick(float DeltaTime)
 
 	switch (CurrentControlMode)
 	{
-	case AABCharacter::EControlMode::DIABLO:
-	{
+	case EControlMode::DIABLO:
 		SpringArm->SetRelativeRotation(FMath::RInterpTo(SpringArm->GetRelativeRotation(), ArmRotationTo, DeltaTime, ArmRotationSpeed));
-	}
-		break;
-	default:
 		break;
 	}
 
 	switch (CurrentControlMode)
 	{
-	case AABCharacter::EControlMode::GTA:
-		break;
-	case AABCharacter::EControlMode::DIABLO:
-	{
+	case EControlMode::DIABLO:
 		if (DirectionToMove.SizeSquared() > 0.0f)
 		{
 			GetController()->SetControlRotation(FRotationMatrix::MakeFromX(DirectionToMove).Rotator());
 			AddMovementInput(DirectionToMove);
 		}
-	}
-		break;
-	default:
 		break;
 	}
-
 }
 
 void AABCharacter::PostInitializeComponents()
@@ -137,6 +126,17 @@ void AABCharacter::PostInitializeComponents()
 
 	ABAnim->OnMontageEnded.AddDynamic(this, &AABCharacter::OnAttackMontageEnded);
 
+	ABAnim->OnNextAttackCheck.AddLambda([this]() -> void {
+
+		ABLOG(Warning, TEXT("OnNextAttackCheck"));
+		CanNextCombo = false;
+
+		if (IsComboInputOn)
+		{
+			AttackStartComboState();
+			ABAnim->JumpToAttackMontageSection(CurrentCombo);
+		}
+	});
 }
 
 // Called to bind functionality to input
@@ -145,52 +145,47 @@ void AABCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction(TEXT("ViewChange"), EInputEvent::IE_Pressed, this, &AABCharacter::ViewChange);
-	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &AABCharacter::Jump);
+	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &AABCharacter::Attack);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &AABCharacter::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &AABCharacter::LeftRight);
-	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AABCharacter::LookUp);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &AABCharacter::Turn);
+	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AABCharacter::LookUp);
 }
 
 void AABCharacter::UpDown(float NewAxisValue)
 {
-	// 정면은 X
 	switch (CurrentControlMode)
 	{
-	case AABCharacter::EControlMode::GTA:
-	{
-		AddMovementInput(FRotationMatrix(GetControlRotation()).GetUnitAxis(EAxis::X), NewAxisValue);
-	}
+	case EControlMode::GTA:
+		AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X), NewAxisValue);
 		break;
-	case AABCharacter::EControlMode::DIABLO:
-	{
+	case EControlMode::DIABLO:
 		DirectionToMove.X = NewAxisValue;
-	}
-		break;
-	default:
 		break;
 	}
-
 }
 
 void AABCharacter::LeftRight(float NewAxisValue)
 {
-	// 우측은 Y
 	switch (CurrentControlMode)
 	{
-	case AABCharacter::EControlMode::GTA:
-	{
-		AddMovementInput(FRotationMatrix(GetControlRotation()).GetUnitAxis(EAxis::Y), NewAxisValue);
-	}
-	break;
-	case AABCharacter::EControlMode::DIABLO:
-	{
+	case EControlMode::GTA:
+		AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::Y), NewAxisValue);
+		break;
+	case EControlMode::DIABLO:
 		DirectionToMove.Y = NewAxisValue;
+		break;
 	}
-	break;
-	default:
+}
+
+void AABCharacter::Turn(float NewAxisValue)
+{
+	switch (CurrentControlMode)
+	{
+	case EControlMode::GTA:
+		AddControllerYawInput(NewAxisValue);
 		break;
 	}
 }
@@ -199,27 +194,8 @@ void AABCharacter::LookUp(float NewAxisValue)
 {
 	switch (CurrentControlMode)
 	{
-	case AABCharacter::EControlMode::GTA:
-	{
+	case EControlMode::GTA:
 		AddControllerPitchInput(NewAxisValue);
-	}
-		break;
-	default:
-		break;
-	}
-	
-}
-
-void AABCharacter::Turn(float NewAxisValue)
-{
-	switch (CurrentControlMode)
-	{
-	case AABCharacter::EControlMode::GTA:
-	{
-		AddControllerYawInput(NewAxisValue);
-	}
-	break;
-	default:
 		break;
 	}
 }
@@ -242,15 +218,43 @@ void AABCharacter::ViewChange()
 void AABCharacter::Attack()
 {
 	if (IsAttacking)
-		return;
-
-	ABAnim->PlayAttafckMontage();
-	IsAttacking = true;
+	{
+		ABCHECK(FMath::IsWithinInclusive<int32>(CurrentCombo, 1, MaxCombo));
+		if (CanNextCombo)
+		{
+			IsComboInputOn = true;
+		}
+	}
+	else
+	{
+		ABCHECK(CurrentCombo == 0);
+		AttackStartComboState();
+		ABAnim->PlayAttackMontage();
+		ABAnim->JumpToAttackMontageSection(CurrentCombo);
+		IsAttacking = true;
+	}
 }
 
 void AABCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	ABCHECK(IsAttacking);
+	ABCHECK(CurrentCombo > 0);
 	IsAttacking = false;
+	AttackEndComboState();
+}
+
+void AABCharacter::AttackStartComboState()
+{
+	CanNextCombo = true;
+	IsComboInputOn = false;
+	ABCHECK(FMath::IsWithinInclusive<int32>(CurrentCombo, 0, MaxCombo - 1));
+	CurrentCombo = FMath::Clamp<int32>(CurrentCombo + 1, 1, MaxCombo);
+}
+
+void AABCharacter::AttackEndComboState()
+{
+	IsComboInputOn = false;
+	CanNextCombo = false;
+	CurrentCombo = 0;
 }
 
