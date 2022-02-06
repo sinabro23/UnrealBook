@@ -38,6 +38,9 @@ AABCharacter::AABCharacter()
 
 	SetControlMode(CurrentControlMode);
 
+	ArmLengthTo = 3.f;
+	ArmRotationSpeed = 10.f;
+	GetCharacterMovement()->JumpZVelocity = 800.f;
 }
 
 // Called when the game starts or when spawned
@@ -53,10 +56,10 @@ void AABCharacter::SetControlMode(EControlMode NewControlMode)
 
 	switch (CurrentControlMode)
 	{
-	case AABCharacter::EControlMode::GTA:
-	{
-		SpringArm->TargetArmLength = 450.f;
-		SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
+	case EControlMode::GTA:
+		//SpringArm->TargetArmLength = 450.0f;
+		//SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
+		ArmLengthTo = 450.0f;
 		SpringArm->bUsePawnControlRotation = true;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;
@@ -65,13 +68,13 @@ void AABCharacter::SetControlMode(EControlMode NewControlMode)
 		bUseControllerRotationYaw = false;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		GetCharacterMovement()->bUseControllerDesiredRotation = false;
-		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.f, 0.0f);
-	}
+		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 		break;
-	case AABCharacter::EControlMode::DIABLO:
-	{
-		SpringArm->TargetArmLength = 800.f;
-		SpringArm->SetRelativeRotation(FRotator(-45.f, 0.0f, 0.0f));
+	case EControlMode::DIABLO:
+		//SpringArm->TargetArmLength = 800.0f;
+		//SpringArm->SetRelativeRotation(FRotator(-45.0f, 0.0f, 0.0f));
+		ArmLengthTo = 800.0f;
+		ArmRotationTo = FRotator(-45.0f, 0.0f, 0.0f);
 		SpringArm->bUsePawnControlRotation = false;
 		SpringArm->bInheritPitch = false;
 		SpringArm->bInheritRoll = false;
@@ -80,13 +83,9 @@ void AABCharacter::SetControlMode(EControlMode NewControlMode)
 		bUseControllerRotationYaw = false;
 		GetCharacterMovement()->bOrientRotationToMovement = false;
 		GetCharacterMovement()->bUseControllerDesiredRotation = true;
-		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.f, 0.0f);
-	}
-		break;
-	default:
+		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 		break;
 	}
-
 
 }
 
@@ -95,8 +94,23 @@ void AABCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	SpringArm->TargetArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, ArmLengthTo, DeltaTime, ArmLengthSpeed);
+
 	switch (CurrentControlMode)
 	{
+	case AABCharacter::EControlMode::DIABLO:
+	{
+		SpringArm->SetRelativeRotation(FMath::RInterpTo(SpringArm->GetRelativeRotation(), ArmRotationTo, DeltaTime, ArmRotationSpeed));
+	}
+		break;
+	default:
+		break;
+	}
+
+	switch (CurrentControlMode)
+	{
+	case AABCharacter::EControlMode::GTA:
+		break;
 	case AABCharacter::EControlMode::DIABLO:
 	{
 		if (DirectionToMove.SizeSquared() > 0.0f)
@@ -118,6 +132,7 @@ void AABCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction(TEXT("ViewChange"), EInputEvent::IE_Pressed, this, &AABCharacter::ViewChange);
+	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &AABCharacter::Jump);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &AABCharacter::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &AABCharacter::LeftRight);
@@ -199,13 +214,13 @@ void AABCharacter::ViewChange()
 {
 	switch (CurrentControlMode)
 	{
-	case AABCharacter::EControlMode::GTA:
+	case EControlMode::GTA:
+		GetController()->SetControlRotation(GetActorRotation());
 		SetControlMode(EControlMode::DIABLO);
 		break;
-	case AABCharacter::EControlMode::DIABLO:
+	case EControlMode::DIABLO:
+		GetController()->SetControlRotation(SpringArm->GetRelativeRotation());
 		SetControlMode(EControlMode::GTA);
-		break;
-	default:
 		break;
 	}
 }
