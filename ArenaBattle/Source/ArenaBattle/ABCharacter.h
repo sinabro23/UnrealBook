@@ -6,11 +6,6 @@
 #include "GameFramework/Character.h"
 #include "ABCharacter.generated.h"
 
-enum
-{
-	GTA_MODE = 0,
-	DIABLO_MODE = 1,
-};
 
 UCLASS()
 class ARENABATTLE_API AABCharacter : public ACharacter
@@ -25,7 +20,15 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void SetControlMode(int32 ControlMode);
+	enum class EControlMode
+	{
+		GTA,
+		DIABLO,
+	};
+
+	void SetControlMode(EControlMode NewControlMode);
+	EControlMode CurrentControlMode = EControlMode::GTA;
+	FVector DirectionToMove = FVector::ZeroVector;
 
 public:	
 	// Called every frame
@@ -45,4 +48,6 @@ private:
 	void LeftRight(float NewAxisValue);
 	void LookUp(float NewAxisValue);
 	void Turn(float NewAxisValue);
+
+	void ViewChange();
 };

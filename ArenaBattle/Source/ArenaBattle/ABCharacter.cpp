@@ -33,8 +33,10 @@ AABCharacter::AABCharacter()
 	{
 		GetMesh()->SetAnimInstanceClass(WARRIOR_ANIM.Class);
 	}
+	
+	CurrentControlMode = EControlMode::DIABLO;
 
-	SetControlMode(GTA_MODE);
+	SetControlMode(CurrentControlMode);
 
 }
 
@@ -45,9 +47,13 @@ void AABCharacter::BeginPlay()
 	
 }
 
-void AABCharacter::SetControlMode(int32 ControlMode)
+void AABCharacter::SetControlMode(EControlMode NewControlMode)
 {
-	if (GTA_MODE == ControlMode)
+	CurrentControlMode = NewControlMode;
+
+	switch (CurrentControlMode)
+	{
+	case AABCharacter::EControlMode::GTA:
 	{
 		SpringArm->TargetArmLength = 450.f;
 		SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
@@ -58,8 +64,30 @@ void AABCharacter::SetControlMode(int32 ControlMode)
 		SpringArm->bDoCollisionTest = true;
 		bUseControllerRotationYaw = false;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
 		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.f, 0.0f);
 	}
+		break;
+	case AABCharacter::EControlMode::DIABLO:
+	{
+		SpringArm->TargetArmLength = 800.f;
+		SpringArm->SetRelativeRotation(FRotator(-45.f, 0.0f, 0.0f));
+		SpringArm->bUsePawnControlRotation = false;
+		SpringArm->bInheritPitch = false;
+		SpringArm->bInheritRoll = false;
+		SpringArm->bInheritYaw = false;
+		SpringArm->bDoCollisionTest = false;
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.f, 0.0f);
+	}
+		break;
+	default:
+		break;
+	}
+
+
 }
 
 // Called every frame
@@ -67,12 +95,29 @@ void AABCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	switch (CurrentControlMode)
+	{
+	case AABCharacter::EControlMode::DIABLO:
+	{
+		if (DirectionToMove.SizeSquared() > 0.0f)
+		{
+			GetController()->SetControlRotation(FRotationMatrix::MakeFromX(DirectionToMove).Rotator());
+			AddMovementInput(DirectionToMove);
+		}
+	}
+		break;
+	default:
+		break;
+	}
+
 }
 
 // Called to bind functionality to input
 void AABCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAction(TEXT("ViewChange"), EInputEvent::IE_Pressed, this, &AABCharacter::ViewChange);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &AABCharacter::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &AABCharacter::LeftRight);
@@ -83,22 +128,85 @@ void AABCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void AABCharacter::UpDown(float NewAxisValue)
 {
 	// 정면은 X
-	AddMovementInput(FRotationMatrix(GetControlRotation()).GetUnitAxis(EAxis::X), NewAxisValue);
+	switch (CurrentControlMode)
+	{
+	case AABCharacter::EControlMode::GTA:
+	{
+		AddMovementInput(FRotationMatrix(GetControlRotation()).GetUnitAxis(EAxis::X), NewAxisValue);
+	}
+		break;
+	case AABCharacter::EControlMode::DIABLO:
+	{
+		DirectionToMove.X = NewAxisValue;
+	}
+		break;
+	default:
+		break;
+	}
+
 }
 
 void AABCharacter::LeftRight(float NewAxisValue)
 {
 	// 우측은 Y
-	AddMovementInput(FRotationMatrix(GetControlRotation()).GetUnitAxis(EAxis::Y), NewAxisValue);
+	switch (CurrentControlMode)
+	{
+	case AABCharacter::EControlMode::GTA:
+	{
+		AddMovementInput(FRotationMatrix(GetControlRotation()).GetUnitAxis(EAxis::Y), NewAxisValue);
+	}
+	break;
+	case AABCharacter::EControlMode::DIABLO:
+	{
+		DirectionToMove.Y = NewAxisValue;
+	}
+	break;
+	default:
+		break;
+	}
 }
 
 void AABCharacter::LookUp(float NewAxisValue)
 {
-	AddControllerPitchInput(NewAxisValue);
+	switch (CurrentControlMode)
+	{
+	case AABCharacter::EControlMode::GTA:
+	{
+		AddControllerPitchInput(NewAxisValue);
+	}
+		break;
+	default:
+		break;
+	}
+	
 }
 
 void AABCharacter::Turn(float NewAxisValue)
 {
-	AddControllerYawInput(NewAxisValue);
+	switch (CurrentControlMode)
+	{
+	case AABCharacter::EControlMode::GTA:
+	{
+		AddControllerYawInput(NewAxisValue);
+	}
+	break;
+	default:
+		break;
+	}
+}
+
+void AABCharacter::ViewChange()
+{
+	switch (CurrentControlMode)
+	{
+	case AABCharacter::EControlMode::GTA:
+		SetControlMode(EControlMode::DIABLO);
+		break;
+	case AABCharacter::EControlMode::DIABLO:
+		SetControlMode(EControlMode::GTA);
+		break;
+	default:
+		break;
+	}
 }
 
