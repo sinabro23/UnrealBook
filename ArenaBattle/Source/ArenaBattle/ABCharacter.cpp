@@ -148,6 +148,20 @@ void AABCharacter::PostInitializeComponents()
 	ABAnim->OnAttackHitCheck.AddUObject(this, &AABCharacter::AttackCheck);
 }
 
+float AABCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	ABLOG(Warning, TEXT("Actor : %s took Damage : %f"), *GetName(), FinalDamage);
+
+	if (FinalDamage > 0.f)
+	{
+		ABAnim->SetDeadAnim();
+		SetActorEnableCollision(false);
+	}
+
+	return FinalDamage;
+}
+
 // Called to bind functionality to input
 void AABCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -307,6 +321,9 @@ void AABCharacter::AttackCheck()
 		{
 			ABLOG(Warning, TEXT("Hit Actor Name : %s"), *HitResult.Actor->GetName());
 		}
+
+		FDamageEvent DamageEvent; // 대미지 종류
+		HitResult.Actor->TakeDamage(50.f, DamageEvent, GetController(), this);
 	}
 }
 
