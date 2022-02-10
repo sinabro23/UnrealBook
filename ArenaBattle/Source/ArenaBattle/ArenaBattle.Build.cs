@@ -16,7 +16,8 @@ public class ArenaBattle : ModuleRules
 			"HeadMountedDisplay",
 			"UMG",
 			"NavigationSystem",
-			"AIModule"
+			"AIModule",
+			"GameplayTasks"
 		});
 	}
 }
