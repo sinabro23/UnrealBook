@@ -19,5 +19,7 @@ public class ArenaBattle : ModuleRules
 			"AIModule",
 			"GameplayTasks"
 		});
+
+		PrivateDependencyModuleNames.AddRange(new string[] { "ArenaBattleSetting" });
 	}
 }

@@ -5,6 +5,7 @@
 #include "ArenaBattle.h"
 #include "Engine/GameInstance.h"
 #include "Engine/DataTable.h"
+#include "Engine/StreamableManager.h"
 #include "ABGameInstance.generated.h"
 
 USTRUCT()
@@ -53,6 +54,7 @@ public:
 	virtual void Init() override;
 	FABCharacterData* GetABCharacterData(int32 Level);
 
+	FStreamableManager StreamableManager;
 private:
 
 	UPROPERTY()
