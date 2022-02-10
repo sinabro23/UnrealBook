@@ -39,5 +39,21 @@ void UBTService_Detect::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 		CollisionQueryParam
 	);
 
+	if (bResult)
+	{
+		for (auto const& OverlapResult : OverlapResults)
+		{
+			AABCharacter* ABCharacter = Cast<AABCharacter>(OverlapResult.GetActor());
+			if (ABCharacter && ABCharacter->GetController()->IsPlayerController()) //AB캐릭터가 존재하고 컨트롤러가 플레이어컨트롤러이면
+			{
+				OwnerComp.GetBlackboardComponent()->SetValueAsObject(AABAIController::TargetKey, ABCharacter);
+				DrawDebugSphere(World, Center, DetectRadius, 16, FColor::Green, false, 0.2f);
+				DrawDebugPoint(World, ABCharacter->GetActorLocation(), 10.f, FColor::Blue, false, 0.2f);
+				DrawDebugLine(World, ControllingPawn->GetActorLocation(), ABCharacter->GetActorLocation(), FColor::Blue, false, 0.2f);
+				return;
+			}
+		}
+	}
+
 	DrawDebugSphere(World, Center, DetectRadius, 16, FColor::Red, false, 0.2f);
 }
