@@ -9,6 +9,7 @@
 #include "ABCharacterStatComponent.h"
 #include "Components/WidgetComponent.h"
 #include "ABCharacterWidget.h"
+#include "ABAIController.h"
 
 // Sets default values
 AABCharacter::AABCharacter()
@@ -83,6 +84,8 @@ AABCharacter::AABCharacter()
 		HPBarWidget->SetDrawSize(FVector2D(150.f, 50.f));
 	}
 
+	AIControllerClass = AABAIController::StaticClass();
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 // Called when the game starts or when spawned
