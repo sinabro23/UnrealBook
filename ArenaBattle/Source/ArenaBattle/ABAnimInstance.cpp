@@ -5,7 +5,11 @@
 
 UABAnimInstance::UABAnimInstance()
 {
-
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> ATTACK_MONTAGE(TEXT("AnimMontage'/Game/Book/Animtaions/AttackMontage.AttackMontage'"));
+	if (ATTACK_MONTAGE.Succeeded())
+	{
+		AttackMontage = ATTACK_MONTAGE.Object;
+	}
 }
 
 void UABAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -22,4 +26,9 @@ void UABAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			bIsInAir = Character->GetMovementComponent()->IsFalling();
 		}
 	}
+}
+
+void UABAnimInstance::PlayAttackMontage()
+{
+	Montage_Play(AttackMontage, 1.f);
 }
