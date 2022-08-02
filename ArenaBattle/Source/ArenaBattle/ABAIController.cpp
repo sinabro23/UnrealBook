@@ -8,6 +8,7 @@
 
 const FName AABAIController::HomePosKey(TEXT("HomePos"));
 const FName AABAIController::PatrolPosKey(TEXT("PatrolPos"));
+const FName AABAIController::Target(TEXT("Target"));
 
 AABAIController::AABAIController()
 {
