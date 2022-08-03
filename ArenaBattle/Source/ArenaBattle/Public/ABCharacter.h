@@ -113,7 +113,14 @@ private:
 	float CharacterMovementSpeed = 600.f;
 	float AIMovementSpeed = 300.f;
 
+
+	void OnAssetLoadCompleted();
+
 public:
 	FOnAttackEndDelegate OnAttackEnd;
+
+private:
+	FSoftObjectPath CharacterAssetToLoad = FSoftObjectPath(nullptr);
+	TSharedPtr<struct FStreamableHandle> AssetStreamingHandle;
 
 };
