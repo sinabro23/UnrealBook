@@ -23,6 +23,9 @@ public:
 	static const FName PatrolPosKey;
 	static const FName Target;
 
+	void RunAI();
+	void StopAI();
+
 private:
 	UPROPERTY()
 	class UBehaviorTree* BTAsset;
