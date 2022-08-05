@@ -89,6 +89,8 @@ public:
 	void AttackCheck();
 
 	int32 GetExp() const;
+	float GetFinalAttackRange() const;
+	float GetFinalAttackDamage() const;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
