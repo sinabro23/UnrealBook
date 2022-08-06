@@ -24,6 +24,7 @@ public:
 	bool AddExp(int32 IncomeExp);
 	void AddGameScore();
 	int32 GetGameHighScore() const;
+	int32 GetCharacterIndex() const;
 	FString SaveSlotName;
 
 	void InitPlayerData();
@@ -39,6 +40,8 @@ protected:
 	int32 CharacterLevel;
 	UPROPERTY(Transient)
 	int32 Exp;
+	UPROPERTY(Transient)
+	int32 CharacterIndex;
 
 public:
 	void SetCharacterLevel(int32 NewCharacterLevel);

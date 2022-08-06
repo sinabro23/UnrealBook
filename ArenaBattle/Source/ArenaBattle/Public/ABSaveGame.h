@@ -25,5 +25,7 @@ public:
 	FString PlayerName;
 	UPROPERTY()
 	int32 HighScore;
+	UPROPERTY()
+	int32 CharacterIndex;
 	
 };

@@ -23,9 +23,10 @@ public:
 	int32 GetScore() const;
 
 private:
-
 	UPROPERTY()
 	class AABGameState* ABGameState;
 
+	UPROPERTY()
+	int32 ScoreToClear = 2;
 
 };

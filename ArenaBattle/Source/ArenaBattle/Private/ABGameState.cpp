@@ -17,3 +17,13 @@ void AABGameState::AddGameScore()
 {
 	TotalGameScore++;
 }
+
+void AABGameState::SetGameCleared()
+{
+	bGameCleared = true;
+}
+
+bool AABGameState::IsGameCleared() const
+{
+	return bGameCleared;
+}
