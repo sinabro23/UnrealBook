@@ -6,6 +6,10 @@
 int main()
 {
     std::cout << "Hello World!\n";
+    int a = 3;
+    int b = 4;
+    int* const n = &a;
+    n = &b;
 }
 
 // 프로그램 실행: <Ctrl+F5> 또는 [디버그] > [디버깅하지 않고 시작] 메뉴
